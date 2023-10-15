@@ -1,0 +1,102 @@
+        lui t1, %hi(gpio)
+        addi t1, t1, %lo(gpio) ;t1 -> gpio address
+        lui a0, %hi(num)
+        addi a0, a0, %lo(num)  ;a0 -> number to be converted
+        addi s1, x0, 1
+        addi s2, x0, 2
+        addi s3, x0, 3
+        addi s4, x0, 4
+        addi s5, x0, 5
+        addi s6, x0, 6
+        addi s7, x0, 7
+        addi s8, x0, 8
+        addi s9, x0, 9
+        jal s10, convert
+        halt
+
+convert addi t2, x0, 0       ;t2 -> counts tens digit by subtracting 10 from original number
+        
+tens  addi a1, a0, -10       ;a1 -> temp register (counter)  
+      blt a1, x0, out        ;if current number is less than 10, exit loop becuase all tens are counted
+      addi a0, a0, -10
+      addi t2, t2, 1
+      jal x0, tens
+
+out     add t4, x0, t2          ;loop counter has a tens digit because that is how many times you write X in case of a number smaller than 40  
+        beq t2, x0, ones   
+        blt t2, s4, X           ;if number of tens is less than 4, I only need Xs
+        beq t2, s4, cetiri      ;if exactly 4, write XL
+        bge t2, s9, devet       ;if greater or equal to 9, I don't need L so I skip it
+        bge t2, s5, L           ;5 ili vece -> pisem L i eventualno dodam X koliko treba
+         
+X       addi a2, x0, 0x58       ;ASCII X 
+        jal ra, lcdwr
+        addi t4, t4, -1
+        bne t4, x0, X
+        jal x0, jedinice
+        
+four  addi a2, x0, 0x58       ;ASCII X
+        jal ra, lcdwr
+L    addi a2, x0, 0x4C        ;ASCII L
+     jal ra, lcdwr
+     addi t4, t4, -5     ;check if number of tens is greater than 5
+     bge t4, s1, X       ;if yes, add the necessary number of Xs
+     jal x0, ones        ; else start counting ones
+
+nine   addi t2, t2, -9
+       bne t2, x0, ten          ;if the digit is not 9, you have reached a 100 so write C 
+       addi a2, x0, 0x58        ;else add a necessary number of Xs
+        jal ra, lcdwr
+ten   addi a2, x0, 0x43       ;ASCII C
+      jal ra, lcdwr
+
+;the exact same logic is applied to ones, only different letter are written
+ones  add a1,x0, a0         ;the original number has only ones left, since tens have been subtracted in a "tens" loop before
+
+loop    addi a1, a1, -1
+        blt a1, x0, out
+        addi a0, a0, -1
+        addi t3, t3, 1
+        jal x0, loop
+         
+out     add t4, x0, t3          ;the loop counter is equal to number of ones
+        beq t4, x0, end        ;if the number is round (10, 20) just skip to the end becuase there is no letter for 0
+        blt t3, s4, I          ;else if less than 4, write necessary number of Is
+        beq t3, s4, IV
+        beq t3, s9, IX
+        bge t3, s5, V
+         
+I       addi a2, x0, 0x49       ;ASCII I
+        jal ra, lcdwr
+        addi t4, t4, -1
+        bne t4, x0, I
+        jal x0, end
+        
+IV      addi a2, x0, 0x49       ;ASCII I
+        jal ra, lcdwr
+V       addi a2, x0, 0x56       ;ASCII V
+        jal ra, lcdwr
+        addi t4, t4, -5         ;check if number is greater than 5
+        bge t4, s1, I           ;if yes, write the necessary number of Is 
+        jal x0, end
+
+IX      addi a2, x0, 0x49       ;ASCII I
+        jal ra, lcdwr
+        addi a2, x0, 0x58       ;ASCII X
+        jal ra, lcdwr
+
+end     addi a2, x0, 0x0A
+        jal ra, lcdwr
+        jalr x0, 0(s10)          ;go back to main
+
+gpio equ 0xFFFF0F00
+num equ 100
+
+ ;a program that is used for outputing the result on an LCD (specifically for this simulator)
+lcdwr   andi a2,a2,0x7F          ;send a negative signal to the highest bit 
+        sb a2, 4(t1) 
+        ori a2,a2,0x80            ;send a positive signal
+        sb a2, 4(t1) 
+        andi a2,a2,0x7F           ;send a negative signal
+        sb a2, 4(t1) 
+        jalr x0, 0(ra)            ;return to main program
