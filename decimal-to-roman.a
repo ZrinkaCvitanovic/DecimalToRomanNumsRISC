@@ -11,13 +11,13 @@
        addi s7, x0, 7
        addi s8, x0, 8
        addi s9, x0, 9
-       jal s10, conv        ;program for converting numbers to Roman
+       jal s10, conv           ;program for converting numbers to Roman
        halt
        
-conv   addi t2, x0, 0        ;t2 -> counts tens digit by subtracting 10 from original number
+conv   addi t2, x0, 0          ;t2 -> counts tens digit by subtracting 10 from original number
         
-tens   addi a1, a0, -10      ;a1 -> temp register (counter)  
-       blt a1, x0, out       ;if current number is less than 10, exit loop becuase all tens are counted
+tens   addi a1, a0, -10        ;a1 -> temp register (counter)  
+       blt a1, x0, out         ;if current number is less than 10, exit loop becuase all tens are counted
        addi a0, a0, -10
        addi t2, t2, 1
        jal x0, tens
@@ -94,10 +94,11 @@ gpio equ 0xFFFF0F00
 num equ 100
 
  ;a program that is used for outputing the result on an LCD (specifically for this simulator)
+
 lcdwr   andi a2,a2,0x7F          ;send a negative signal to the highest bit 
         sb a2, 4(t1) 
-        ori a2,a2,0x80            ;send a positive signal
+        ori a2,a2,0x80           ;send a positive signal
         sb a2, 4(t1) 
-        andi a2,a2,0x7F           ;send a negative signal
+        andi a2,a2,0x7F          ;send a negative signal
         sb a2, 4(t1) 
-        jalr x0, 0(ra)            ;return to main program
+        jalr x0, 0(ra)           ;return to main program
